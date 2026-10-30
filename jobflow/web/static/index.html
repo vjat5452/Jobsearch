@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JobFlow</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="mark">◎</span><span>JobFlow</span></div>
+  <div class="stats">
+    <div class="stat"><div class="label">Applied today</div><div class="value" id="s-today">0</div></div>
+    <div class="stat"><div class="label">To approve</div><div class="value" id="s-review">0</div></div>
+    <div class="stat"><div class="label">Questions</div><div class="value" id="s-questions">0</div></div>
+    <div class="stat"><div class="label">Auto queue</div><div class="value" id="s-queued">0</div></div>
+    <div class="stat"><div class="label">Tokens today</div><div class="value" id="s-tokens">0%</div></div>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab" data-tab="setup">Setup <span class="badge warn" id="b-setup"></span></button>
+  <button class="tab active" data-tab="approve">Approve <span class="badge" id="b-review"></span></button>
+  <button class="tab site-tab" data-tab="site-linkedin">LinkedIn <span class="badge" id="b-linkedin"></span></button>
+  <button class="tab site-tab" data-tab="site-naukri">Naukri <span class="badge" id="b-naukri"></span></button>
+  <button class="tab site-tab" data-tab="site-unstop">Unstop <span class="badge" id="b-unstop"></span></button>
+  <button class="tab" data-tab="questions">Questions <span class="badge" id="b-questions"></span></button>
+  <button class="tab" data-tab="applied">Applied</button>
+  <button class="tab" data-tab="browse">Browse</button>
+  <button class="tab" data-tab="sites">Sites</button>
+</nav>
+
+<main>
+  <section class="content">
+    <div class="pane" id="pane-approve">
+      <div class="toolbar">
+        <input id="q" class="search" type="search" placeholder="Filter by role, company, place…">
+        <select id="kind" class="sel">
+          <option value="">every kind</option>
+          <option value="easy">quick apply</option>
+          <option value="ats_form">company form</option>
+          <option value="external">apply yourself</option>
+        </select>
+        <button id="apply-all" class="btn primary">Apply to all shown</button>
+      </div>
+      <p class="hint">Strong quick-apply matches are applied to automatically. These wait for you:
+        <b>Apply</b> sends the bot with a resume tailored to that job (see it with <b>Resume</b>),
+        <b>Apply to all shown</b> does it for every job in the list. Company-site links need you:
+        <b>Open</b>, then <b>I applied</b>.</p>
+      <div id="review-list" class="cards"></div>
+    </div>
+
+    <div class="pane hidden" id="pane-site">
+      <div class="site-head">
+        <div>
+          <h2 id="ps-name"></h2>
+          <div class="m" id="ps-state"></div>
+          <div class="meter"><b id="ps-meter"></b></div>
+          <div class="m" id="ps-rules"></div>
+          <div class="m" id="ps-search"></div>
+        </div>
+        <div class="nums" id="ps-nums"></div>
+      </div>
+      <div class="row site-actions">
+        <button class="btn" data-site-action="login">Log in</button>
+        <button class="btn hidden" id="ps-login-done">I'm logged in</button>
+        <button class="btn" data-site-action="search">Search now</button>
+        <button class="btn" data-site-action="dryrun"
+          title="opens 2 queued jobs and fills every step, but never presses Submit - screenshots in Applied">Test run (no submit)</button>
+        <button class="btn primary" data-site-action="apply" title="applies to up to 5 queued or approved jobs now">Apply now (5)</button>
+      </div>
+      <pre class="log" id="ps-log"></pre>
+      <div class="toolbar">
+        <div class="seg" id="ps-view">
+          <button data-v="review" class="on">To approve</button>
+          <button data-v="queued,approved,applying">Auto queue</button>
+          <button data-v="needs_input">Needs answer</button>
+          <button data-v="applied">Applied</button>
+          <button data-v="">All</button>
+        </div>
+        <input id="ps-q" class="search" type="search" placeholder="Filter by role, company, place…">
+      </div>
+      <div id="ps-list" class="cards"></div>
+    </div>
+
+    <div class="pane hidden" id="pane-questions">
+      <p class="hint">The bot could not answer these from your profile. Answer once, truthfully —
+        it is reused for every application, and the jobs waiting on it go back in the queue.</p>
+      <div id="question-list"></div>
+    </div>
+
+    <div class="pane hidden" id="pane-applied">
+      <p class="hint">Everything sent on your behalf, with the answers it gave and the final page.</p>
+      <div id="app-list"></div>
+    </div>
+
+    <div class="pane hidden" id="pane-browse">
+      <div class="toolbar">
+        <input id="bq" class="search" type="search" placeholder="Search every open job…">
+        <select id="bstatus" class="sel">
+          <option value="">any status</option>
+          <option value="queued">queued (auto)</option>
+          <option value="review">review</option>
+          <option value="applied">applied</option>
+          <option value="needs_input">needs answer</option>
+          <option value="failed">failed</option>
+          <option value="skipped">skipped</option>
+          <option value="duplicate">duplicate</option>
+        </select>
+      </div>
+      <div id="grid" class="grid"></div>
+      <div class="legend"><span>weaker match</span><i class="ramp"></i><span>stronger</span>
+        <span class="sep"></span><span id="gridnote"></span></div>
+    </div>
+
+    <div class="pane hidden" id="pane-sites">
+      <div id="site-list" class="sites"></div>
+    </div>
+
+    <div class="pane hidden" id="pane-setup">
+      <div class="steps">
+        <div class="step" id="st-key">
+          <div class="sn">1</div>
+          <div class="sb">
+            <div class="t">AI key <span class="ok" id="key-ok"></span></div>
+            <div class="m">Scores jobs, answers form questions, edits your resume. Free at
+              <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>.
+              Saved to secrets.txt on this PC only.</div>
+            <form id="key-form" class="row"><input id="key-in" type="password" autocomplete="off"
+              placeholder="paste your key (gsk_…)"><button class="btn primary">Save key</button></form>
+          </div>
+        </div>
+        <div class="step" id="st-resume">
+          <div class="sn">2</div>
+          <div class="sb">
+            <div class="t">Your resume (PDF) <span class="ok" id="resume-ok"></span></div>
+            <div class="m">Your original is never changed. When a job's ATS match is low, an edited copy is
+              made for that job - same fonts and layout, a few lines reworded to include keywords you really have.</div>
+            <form id="resume-form" class="row"><input id="resume-in" type="file" accept="application/pdf">
+              <button class="btn primary">Upload</button></form>
+          </div>
+        </div>
+        <div class="step" id="st-profile">
+          <div class="sn">3</div>
+          <div class="sb">
+            <div class="t">Your facts (profile.yaml) <span class="ok" id="profile-ok"></span></div>
+            <div class="m">Every answer the bot gives comes from here. <b>skill_years</b> decides which missing
+              keywords may be added to your resume - a skill not listed is never claimed.
+              Draft it from your resume, then check every line marked <code># CONFIRM</code>.</div>
+            <div class="row"><button class="btn" data-action="init">Draft from resume</button>
+              <span class="m" id="init-state"></span></div>
+            <textarea id="profile-in" spellcheck="false"></textarea>
+            <div class="row"><button class="btn primary" id="profile-save">Save profile</button></div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="sn">4</div>
+          <div class="sb">
+            <div class="t">Find and rank jobs</div>
+            <div class="m">Company boards are searched without a login. LinkedIn, Naukri, Indeed and Glassdoor
+              need you logged in once: run <code>python main.py login</code> in a terminal.</div>
+            <div class="row">
+              <button class="btn" data-action="discover">Search company boards</button>
+              <button class="btn" data-action="score">Score &amp; route jobs</button>
+            </div>
+            <pre class="log" id="action-log"></pre>
+          </div>
+        </div>
+        <div class="step">
+          <div class="sn">5</div>
+          <div class="sb">
+            <div class="t">Auto-apply <span class="ok" id="worker-ok"></span></div>
+            <div class="m">Runs in the background: searches every few hours, applies to strong quick-apply matches,
+              fills LinkedIn and Naukri questions from your facts, and applies to everything you approve.</div>
+            <div class="row"><button class="btn primary" data-action="start">Start</button>
+              <button class="btn" data-action="stop">Stop</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="kicker">Live activity</div>
+    <ul id="feed" class="feed"><li class="muted">waiting for the worker…</li></ul>
+  </aside>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

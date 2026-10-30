@@ -1,0 +1,166 @@
+# Copy to config/settings.yaml and edit. Restart the worker after changes:
+#   python main.py stop ; python main.py start
+
+resume_path: resume.pdf                 # relative to this repo, or an absolute path
+
+# ---- the model --------------------------------------------------------------
+# Any OpenAI-compatible endpoint. Groq has a free tier and is the default.
+llm:
+  provider: groq                # groq | openai | openrouter | xkiro | ollama | anthropic | none
+  base_url: null                # override the provider's URL (any OpenAI-compatible server)
+  key_env: GROQ_API_KEY         # env var holding the key; or put  GROQ_API_KEY=...  in secrets.txt
+  models:
+    scoring: openai/gpt-oss-20b   # cheap, used for every job (batched, 25 per request)
+    answers: openai/gpt-oss-120b  # used for form questions and cover notes
+  batch_size: 25
+  tokens_per_batch: 4000        # planning estimate; the per-batch budget check is the real guard
+  daily_token_limit: 500000     # stop scoring for the day well before the provider's own limit
+
+# ---- your resume, edited per job when its ATS match is low -------------------------
+# Before applying, the posting's keywords are compared with your resume. Below
+# ats_min % coverage, a copy of YOUR PDF is edited in place (same fonts, sizes,
+# layout): up to 6 existing lines reworded to include missing keywords that are in
+# profile.yaml skill_years. Nothing else is ever added - checked in code. The copy is
+# kept only if the match improves. Naukri always uses the resume in your account.
+tailor:
+  enabled: true
+  ats_min: 70
+
+# ---- the hybrid: what gets applied to without asking --------------------------
+# auto   = an in-site quick apply (LinkedIn Easy Apply, Naukri Apply, Indeed Easily
+#          apply, Glassdoor Easy Apply, Unstop) scoring >= auto_min. Applied by the bot.
+# review = anything else scoring >= review_min. Waits in the dashboard's Approve tab.
+# skip   = below review_min, filtered out, scam risk, or a duplicate of a job already
+#          handled on another site.
+routing:
+  auto_min: 7                   # 0-10
+  review_min: 6
+  prefer: [ats, linkedin, naukri, indeed, glassdoor, unstop]   # which copy of a duplicate wins
+  platforms:                    # per-site overrides
+    ats: {auto: false}          # company forms are long and varied: always review
+    # linkedin: {auto_min: 8}
+
+# Max applications per day per site. The bot also detects each site's own limit
+# and pauses that site until tomorrow.
+daily_caps:
+  linkedin: 25
+  naukri: 40
+  indeed: 20
+  glassdoor: 15
+  unstop: 15
+  ats: 15
+
+# ---- the non-stop worker (python main.py start) -------------------------------
+auto:
+  platforms: [naukri, linkedin, indeed, glassdoor, unstop, ats]
+  per_turn: 5                   # applications on one site before rotating to the next
+  discover_every_hours: 4
+  idle_minutes: 20
+  max_consecutive_failures: 3
+
+# Seconds, random between min and max
+pacing:
+  between_pages: [4, 9]
+  between_applications: [60, 180]
+  think: [1.0, 3.0]
+
+# ---- filters: cheap checks before any model call ------------------------------
+filters:
+  # a title must match this (regex, case-insensitive)
+  title_include: >-
+    \b(developer|engineer|sde|programmer|full[- ]?stack|backend|back-end|frontend|front-end|python|django|react|node|javascript|web|software|ai|ml|machine learning|gen ?ai|llm|data scientist)\b
+  # titles matching this are skipped
+  title_exclude: >-
+    \b(senior|sr\.?|lead|manager|architect|principal|head|director|vp|staff|trainer|teacher|faculty|sales|bpo|telecaller|voice|back ?office|data entry|customer (support|service|care)|walk-?in|seo|marketing|hr|recruiter)\b
+  # stacks you don't work in (title match = skip). Empty = allow all.
+  stack_exclude: >-
+    \bphp\b|\.net\b|\bdot ?net\b|\bc#|\bsap\b|salesforce|mainframe|\bcobol\b|servicenow|pega
+  locations: []                 # substrings; empty = anywhere. e.g. [india, remote, pune]
+  max_required_experience: 3    # skip jobs asking for more than this many years
+  skip_companies: []
+  # Postings containing any of these are treated as scams and never applied to
+  red_flags:
+    - registration fee
+    - registration charges
+    - security deposit
+    - refundable deposit
+    - training fee
+    - pay for training
+    - processing fee
+    - joining fee
+    - kit fee
+    - whatsapp only
+    - earn from home
+    - earn daily
+    - no interview direct joining
+    - typing job
+    - copy paste job
+    - data entry from home
+
+# ---- browser sites -------------------------------------------------------------
+linkedin:
+  pages: 6                      # pages of 25 from the Easy Apply collection
+  keywords: [software engineer, python developer, full stack developer]
+  location: India
+  days: 3
+
+naukri:
+  keywords: [python developer, full stack developer, react developer, backend developer, software engineer]
+  locations: [pune, bangalore, hyderabad, delhi-ncr]
+  experience_years: 1
+  job_age_days: 3
+  pages_per_search: 1
+
+indeed:
+  domain: in.indeed.com
+  keywords: [python developer, full stack developer, software engineer]
+  locations: [Pune, Bangalore, Remote]
+  days: 3
+
+glassdoor:
+  domain: www.glassdoor.co.in
+  keywords: [python developer, software engineer]
+  location_include: pune|bangalore|bengaluru|hyderabad|remote|india
+
+unstop:
+  keywords: [python developer, software engineer, full stack developer]
+  location_include: pune|bangalore|bengaluru|hyderabad|remote|online|india
+
+# ---- company career boards (HTTP, no login needed) ------------------------------
+# board: greenhouse | lever | ashby | workable | workday | oracle | atlassian
+# Find the slug in the careers URL:
+#   boards.greenhouse.io/figma            -> greenhouse, figma
+#   jobs.ashbyhq.com/ramp                 -> ashby, ramp
+#   jobs.lever.co/spotify                 -> lever, spotify
+#   adobe.wd5.myworkdayjobs.com/external  -> workday, adobe/wd5/external
+companies:
+  - {name: 'Stripe', board: greenhouse, slug: 'stripe', domain: stripe.com}
+  - {name: 'Databricks', board: greenhouse, slug: 'databricks', domain: databricks.com}
+  - {name: 'GitLab', board: greenhouse, slug: 'gitlab', domain: gitlab.com}
+  - {name: 'Groww', board: greenhouse, slug: 'groww', domain: groww.in}
+  - {name: 'Notion', board: ashby, slug: 'notion', domain: notion.so}
+  - {name: 'Spotify', board: lever, slug: 'spotify', domain: spotify.com}
+  - {name: 'Paytm', board: lever, slug: 'paytm', domain: paytm.com}
+  - {name: 'Adobe', board: workday, slug: 'adobe/wd5/external_experienced', domain: adobe.com}
+  - {name: 'NVIDIA', board: workday, slug: 'nvidia/wd5/NVIDIAExternalCareerSite', domain: nvidia.com}
+  - {name: 'Oracle', board: oracle, slug: 'eeho.fa.us2.oraclecloud.com/CX_1', domain: oracle.com}
+  - {name: 'Atlassian', board: atlassian, slug: 'atlassian', domain: atlassian.com}
+
+# free remote-job aggregators: discovery only, they link out (always routed to review)
+discovery:
+  enabled: false
+  queries: [python developer, full stack developer]
+  max_per_query: 30
+  expire_after_days: 4
+
+# ---- email (optional) -------------------------------------------------------------
+# Password from env JOBFLOW_SMTP_PASSWORD (a Gmail App Password) or secrets.txt.
+email:
+  enabled: false
+  to: you@example.com
+  from: you@example.com
+  smtp_host: smtp.gmail.com
+  smtp_port: 587
+
+web:
+  port: 8765

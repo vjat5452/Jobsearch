@@ -1,0 +1,69 @@
+# ---------------------------------------------------------------------------
+# YOUR FACTS. Every answer JobFlow gives on an application form comes from this
+# file or from answers you typed yourself (python main.py questions / dashboard).
+# Anything left null is asked once and remembered. Never put anything here that
+# isn't true. `python main.py init` drafts this from your resume; lines it had to
+# guess are marked "# CONFIRM".
+# ---------------------------------------------------------------------------
+
+personal:
+  first_name: null
+  last_name: null
+  full_name: null
+  email: null
+  phone: null              # with country code, e.g. "+91-9876543210"
+  phone_digits: null       # digits only, e.g. "9876543210"
+  city: null
+  current_location: null   # e.g. "Pune, Maharashtra, India"
+  linkedin_url: null
+  github_url: null
+  portfolio_url: null
+  gender: null
+  date_of_birth: null
+
+education:
+  degree: null             # e.g. "B.Tech, Computer Science"
+  college: null
+  graduation_year: null
+  graduation_month: null
+  cgpa: null
+  graduated: null          # true once the degree is complete
+  class_12: null
+  class_10: null
+  class_12_percentage: null
+  class_10_percentage: null
+
+experience:
+  total_years: 0
+  relevant_years: 0
+  current_company: null
+  current_title: null
+  current_job_start: null
+  previous: []             # - {company: ..., title: ..., period: ..., location: ...}
+  highlights: []           # short, true, specific achievements
+
+# Years of hands-on experience per skill. A skill NOT listed here is answered
+# honestly as 0 / "No".
+skill_years: {}
+#  python: 1.5
+#  react: 1
+
+job_preferences:
+  notice_period: null              # e.g. "Immediate", 15, 30
+  can_join_immediately: null
+  current_ctc_lpa: null
+  expected_ctc_india_lpa: null
+  min_ctc_india_lpa: null
+  expected_salary_abroad: null
+  willing_to_relocate: null
+  preferred_locations: []
+  open_to_remote: true
+  open_to_hybrid: true
+  open_to_onsite: true
+  open_to_night_shift: null
+  has_own_laptop: null
+  has_passport: null
+  authorized_to_work_in_india: null
+  needs_visa_sponsorship_abroad: null
+  serving_notice: null
+  reason_for_change: null

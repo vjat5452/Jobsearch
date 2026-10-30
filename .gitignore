@@ -1,0 +1,17 @@
+# personal data and secrets - never commit these
+config/settings.yaml
+config/profile.yaml
+secrets.txt
+/resume.*
+/resume/
+*.pdf
+.chrome-profile/
+data/
+
+# generated
+.venv/
+__pycache__/
+*.pyc
+*.db
+*.log
+.DS_Store

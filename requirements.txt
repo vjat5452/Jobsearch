@@ -1,0 +1,10 @@
+requests>=2.31
+PyYAML>=6.0
+pymupdf>=1.24
+playwright>=1.47
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9
+
+# Only needed if llm.provider is "anthropic".
+anthropic>=0.40
