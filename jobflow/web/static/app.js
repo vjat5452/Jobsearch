@@ -4,6 +4,18 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
 const KEYS = ["skills", "seniority", "location", "domain", "recency", "reach"];
 const KIND = { easy: "quick apply", ats_form: "company form", external: "apply yourself" };
 
+// Non-blocking notices in place of alert(); confirm() stays for destructive prompts.
+function toast(msg, err) {
+  const box = $("toasts");
+  if (!box) return;
+  const el = document.createElement("div");
+  el.className = "toast" + (err ? " err" : "");
+  el.textContent = msg;
+  box.appendChild(el);
+  setTimeout(() => el.remove(), Math.min(9000, 3000 + String(msg).length * 40));
+}
+window.alert = (msg) => toast(msg, /fail|error|rejected|not |cannot|invalid/i.test(String(msg)));
+
 async function api(path, opts) {
   const r = await fetch(path, opts);
   if (!r.ok) {
@@ -157,7 +169,7 @@ function reviewCard(j) {
     </div>`;
   el.appendChild(body);
   const sc = document.createElement("div");
-  sc.className = "score";
+  sc.className = "score" + (j.score >= 7 ? " hi" : j.score >= 6 ? " mid" : "");
   sc.textContent = j.score === null ? "–" : `${j.score}/10`;
   el.appendChild(sc);
   const atsBtn = body.querySelector("button[data-ats]");
