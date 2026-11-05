@@ -11,6 +11,23 @@ against your resume, and applies for you: **automatically** for quick-apply jobs
                  scam phrases   cross-site dedupe                                       skip
 ```
 
+## Quick start
+
+```powershell
+cd C:\j_f
+pip install -r requirements.txt                      # once
+copy config\settings.example.yaml config\settings.yaml   # once, then edit keywords/locations
+python main.py login      # once per site: log in in the window that opens, then press Enter
+python main.py web        # dashboard at http://127.0.0.1:8765  (Setup tab: key, resume, profile)
+python main.py start      # worker in the background: discover, score, apply
+python main.py status     # is it running? per-site counts and the last log lines
+python main.py stop       # stop the worker and its Chrome
+```
+
+Before the first real run, put your Groq key in `secrets.txt` (`GROQ_API_KEY=gsk_...`), set `resume_path`,
+and check `config/profile.yaml`. Try `python main.py apply --only linkedin --dry-run --limit 2` first: it fills
+forms but never submits. Full setup details are below.
+
 ## The hybrid
 
 | Route | When | What happens |
@@ -54,7 +71,7 @@ a screenshot of the final page.
 Needs **Python 3.12+** (python.org, tick "Add to PATH") and **Google Chrome**.
 
 ```powershell
-cd C:\jobflow
+cd C:\j_f
 pip install -r requirements.txt
 copy config\settings.example.yaml config\settings.yaml
 ```
